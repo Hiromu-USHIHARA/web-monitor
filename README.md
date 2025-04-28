@@ -20,7 +20,6 @@
 - 主要ライブラリ:
   - requests: ウェブページの取得
   - beautifulsoup4: HTMLの解析
-  - schedule: タスクのスケジューリング
   - python-dotenv: 環境変数の管理
 
 ## 機能説明
@@ -44,19 +43,39 @@
 5. `load_urls()`
    - 監視対象のURLを読み込み
    - urls.txtからURLリストを取得
+   - 読み込み状況をログに記録
 
 6. `get_page_content(url)`
    - 指定したURLのページ内容を取得
    - エラーハンドリングを含む
+   - 取得状況をログに記録
 
-7. `send_email(url, changes)`git config pull.rebase false
+7. `send_email(url, changes)`
    - 更新通知のメールを送信
    - SMTPサーバーを使用
+   - 複数のメールアドレスに対応
 
 8. `check_webpage_changes()`
    - メインの監視処理
    - 各URLの内容を取得し、前回のハッシュと比較
    - 更新を検出した場合にメール通知
+   - URLの追加・削除を検出
+   - 変更のサマリーを表示
+
+## 監視の種類
+1. ページの更新
+   - ページの内容が変更された場合に通知
+   - ハッシュ値の比較により検出
+
+2. URLの追加
+   - 新しいURLが追加された場合に通知
+   - 初回の監視開始を通知
+   - 変更サマリーに表示
+
+3. URLの削除
+   - URLが削除された場合に検出
+   - 変更サマリーに表示
+   - 次回から監視対象から除外
 
 ## ローカルでの実行方法
 1. 環境の準備
@@ -71,7 +90,7 @@
    SMTP_PORT=587
    EMAIL_USER=your_email@gmail.com
    EMAIL_PASSWORD=your_app_password
-   TO_EMAIL=notification@example.com
+   TO_EMAILS=user1@example.com,user2@example.com,user3@example.com
    ```
 
 3. 監視対象URLの設定
@@ -89,7 +108,7 @@
      - SMTP_PORT
      - EMAIL_USER
      - EMAIL_PASSWORD
-     - TO_EMAIL
+     - TO_EMAILS（カンマ区切りのメールアドレスリスト）
 
 2. ワークフローの設定
    - デフォルトで毎日午前10時（日本時間）に実行
@@ -98,8 +117,11 @@
 3. 実行の確認
    - 「Actions」タブでワークフローの実行状況を確認
    - ログでエラーや通知の送信状況を確認
+   - URLの変更状況を確認
 
 ## 注意事項
 - Gmailを使用する場合は2段階認証を有効にし、アプリパスワードを生成する必要があります
 - 監視対象のURLが変更された場合、初回実行時に通知が送信されます
-- ハッシュファイルはGitHub Actionsのキャッシュとリポジトリの両方で管理されます 
+- ハッシュファイルはGitHub Actionsのキャッシュとリポジトリの両方で管理されます
+- 複数のメールアドレスはカンマ（,）で区切って指定します
+- URLの追加・削除は実行時に自動的に検出されます 
