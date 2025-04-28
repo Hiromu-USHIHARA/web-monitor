@@ -105,6 +105,7 @@ def check_webpage_changes():
     new_hashes = {}
 
     for url in urls:
+        print(f"監視中: {url}")
         current_content = get_page_content(url)
         if not current_content:
             continue
@@ -122,6 +123,8 @@ def check_webpage_changes():
             if current_hash != current_hashes[url]:
                 print(f"更新を検出: {url}")
                 send_email(url, "ページの内容が更新されました。")
+            else:
+                print(f"更新なし: {url}")
         else:
             print(f"新しいURLを追加: {url}")
             send_email(url, "新しいURLの監視を開始しました。")
