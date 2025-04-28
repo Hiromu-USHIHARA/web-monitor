@@ -5,7 +5,6 @@
 
 ## リポジトリ構成
 ```
-.
 ├── .github/
 │   └── workflows/
 │       └── main.yml      # GitHub Actionsの設定ファイル
@@ -50,7 +49,7 @@
    - 指定したURLのページ内容を取得
    - エラーハンドリングを含む
 
-7. `send_email(url, changes)`
+7. `send_email(url, changes)`git config pull.rebase false
    - 更新通知のメールを送信
    - SMTPサーバーを使用
 
