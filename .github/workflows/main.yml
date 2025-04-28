@@ -14,12 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.9'
     
@@ -29,7 +29,7 @@ jobs:
         pip install -r requirements.txt
     
     - name: Cache hash file
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: last_hashes.json
         key: ${{ runner.os }}-hashes-${{ hashFiles('urls.txt') }}
@@ -42,7 +42,7 @@ jobs:
         SMTP_PORT: ${{ secrets.SMTP_PORT }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        TO_EMAILS: ${{ secrets.TO_EMAILS }}
       run: python main.py
     
     - name: Commit changes
