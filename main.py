@@ -16,7 +16,8 @@ SMTP_SERVER = os.getenv('SMTP_SERVER')
 SMTP_PORT = int(os.getenv('SMTP_PORT', 587))
 EMAIL_USER = os.getenv('EMAIL_USER')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
-TO_EMAIL = os.getenv('TO_EMAIL')
+# 複数のメールアドレスをカンマ区切りで取得
+TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if email.strip()]
 
 # ハッシュファイルのパス
 HASH_FILE = 'last_hashes.json'
@@ -69,9 +70,13 @@ def get_page_content(url):
 
 # メールを送信
 def send_email(url, changes):
+    if not TO_EMAILS:
+        print("警告: 送信先メールアドレスが設定されていません")
+        return
+
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
-    msg['To'] = TO_EMAIL
+    msg['To'] = ', '.join(TO_EMAILS)  # 複数のアドレスをカンマ区切りで設定
     msg['Subject'] = f"ウェブページ更新通知: {url}"
 
     body = f"""
@@ -89,7 +94,7 @@ def send_email(url, changes):
         server.login(EMAIL_USER, EMAIL_PASSWORD)
         server.send_message(msg)
         server.quit()
-        print(f"メールを送信しました: {url}")
+        print(f"メールを送信しました: {url} -> {', '.join(TO_EMAILS)}")
     except Exception as e:
         print(f"メール送信エラー: {e}")
 
