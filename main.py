@@ -23,12 +23,27 @@ TO_EMAIL = os.getenv('TO_EMAIL')
 # ハッシュファイルのパス
 HASH_FILE = 'last_hashes.json'
 
+# ハッシュファイルを初期化
+def initialize_hash_file():
+    if not os.path.exists(HASH_FILE):
+        with open(HASH_FILE, 'w') as f:
+            json.dump({}, f, indent=2)
+        print(f"ハッシュファイルを初期化しました: {HASH_FILE}")
+
 # ハッシュファイルを読み込む
 def load_hashes():
-    if os.path.exists(HASH_FILE):
-        with open(HASH_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+    try:
+        if os.path.exists(HASH_FILE):
+            with open(HASH_FILE, 'r') as f:
+                content = f.read()
+                if not content.strip():  # ファイルが空の場合
+                    return {}
+                return json.loads(content)
+        return {}
+    except json.JSONDecodeError:
+        print(f"ハッシュファイルの形式が不正です。初期化します。")
+        initialize_hash_file()
+        return {}
 
 # ハッシュファイルを保存
 def save_hashes(hashes):
@@ -113,6 +128,10 @@ def check_webpage_changes():
 
 def main():
     print("ウェブページ監視を開始します...")
+    
+    # ハッシュファイルの初期化
+    initialize_hash_file()
+    
     # 毎日午前9時にチェック
     schedule.every().day.at("09:00").do(check_webpage_changes)
     
