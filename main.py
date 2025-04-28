@@ -1,8 +1,6 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-import schedule
-import time
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -132,15 +130,10 @@ def main():
     # ハッシュファイルの初期化
     initialize_hash_file()
     
-    # 毎日午前9時にチェック
-    schedule.every().day.at("09:00").do(check_webpage_changes)
-    
-    # 初回実行
+    # ウェブページの変更をチェック
     check_webpage_changes()
     
-    while True:
-        schedule.run_pending()
-        time.sleep(60)
+    print("ウェブページ監視を完了しました。")
 
 if __name__ == "__main__":
     main()

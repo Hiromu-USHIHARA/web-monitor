@@ -22,6 +22,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Cache hash file
+      uses: actions/cache@v3
+      with:
+        path: last_hashes.json
+        key: ${{ runner.os }}-hashes-${{ hashFiles('urls.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-hashes-
+    
     - name: Run monitor
       env:
         SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
