@@ -46,7 +46,7 @@ jobs:
       run: python main.py
     
     - name: Commit changes
-      if: always()
+      if: success()
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
