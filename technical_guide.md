@@ -6,6 +6,7 @@
 
 - Pythonを使用したシンプルな実装
 - ハッシュベースの更新検出
+- HTMLスナップショットによる差分抽出
 - SMTPによるメール通知
 - GitHub Actionsによる自動実行
 - 環境変数による設定管理
@@ -91,6 +92,7 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import json
 import hashlib
+import difflib
 ```
 
 ### 2.2 環境変数の読み込み
@@ -210,7 +212,72 @@ def load_urls():
         return []
 ```
 
-### 2.7 メインの監視処理関数の実装
+### 2.7 HTMLスナップショット管理関数の実装
+
+ウェブページのHTMLを保存し、差分を抽出する関数を実装します。
+
+```python
+# HTML保存ディレクトリのパス
+HTML_DIR = 'html_snapshots'
+
+# HTMLファイルのパスを生成
+def get_html_file_path(url):
+    filename = hashlib.md5(url.encode()).hexdigest() + '.html'
+    return os.path.join(HTML_DIR, filename)
+
+# HTMLを保存
+def save_html(url, content):
+    file_path = get_html_file_path(url)
+    print(f"HTML保存を試みます: {file_path}")
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"HTMLを保存しました: {file_path}")
+    except Exception as e:
+        print(f"HTMLの保存に失敗しました: {file_path} - {str(e)}")
+        print(f"現在のディレクトリ: {os.getcwd()}")
+        print(f"ディレクトリの存在確認: {os.path.exists(HTML_DIR)}")
+        print(f"ディレクトリの権限: {oct(os.stat(HTML_DIR).st_mode)[-3:]}")
+        print(f"ファイルの権限: {oct(os.stat(file_path).st_mode)[-3:] if os.path.exists(file_path) else 'ファイルが存在しません'}")
+
+# 前回のHTMLを読み込む
+def load_previous_html(url):
+    file_path = get_html_file_path(url)
+    print(f"前回のHTMLを読み込みます: {file_path}")
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                print(f"前回のHTMLを読み込みました: {file_path}")
+                return content
+        print(f"前回のHTMLが存在しません: {file_path}")
+    except Exception as e:
+        print(f"前回のHTMLの読み込みに失敗しました: {file_path} - {str(e)}")
+        print(f"現在のディレクトリ: {os.getcwd()}")
+        print(f"ディレクトリの存在確認: {os.path.exists(HTML_DIR)}")
+        print(f"ディレクトリの権限: {oct(os.stat(HTML_DIR).st_mode)[-3:]}")
+        print(f"ファイルの権限: {oct(os.stat(file_path).st_mode)[-3:] if os.path.exists(file_path) else 'ファイルが存在しません'}")
+    return None
+
+# 差分を抽出
+def get_diff(previous_content, current_content):
+    if not previous_content:
+        return "初回の監視です。"
+    
+    previous_lines = previous_content.splitlines()
+    current_lines = current_content.splitlines()
+    
+    diff = difflib.unified_diff(
+        previous_lines,
+        current_lines,
+        fromfile='前回のHTML',
+        tofile='現在のHTML',
+        lineterm=''
+    )
+    return '\n'.join(diff)
+```
+
+### 2.8 メインの監視処理関数の実装
 
 ウェブページの更新を監視するメインの関数を実装します．
 
@@ -240,6 +307,15 @@ def check_webpage_changes():
         if not current_content:
             continue
 
+        # HTMLを保存
+        save_html(url, current_content)
+        
+        # 前回のHTMLを読み込む
+        previous_content = load_previous_html(url)
+        
+        # 差分を抽出
+        diff = get_diff(previous_content, current_content)
+        
         # ページのメインコンテンツを抽出
         soup = BeautifulSoup(current_content, 'html.parser')
         main_content = soup.get_text()
@@ -252,7 +328,7 @@ def check_webpage_changes():
         if url in current_hashes:
             if current_hash != current_hashes[url]:
                 print(f"更新を検出: {url}")
-                send_email(url, "ページの内容が更新されました。")
+                send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
             else:
                 print(f"更新なし: {url}")
         else:
@@ -276,7 +352,7 @@ def check_webpage_changes():
                 print(f"  - {url}")
 ```
 
-### 2.8 メイン関数の実装
+### 2.9 メイン関数の実装
 
 プログラムのエントリーポイントとなるメイン関数を実装します．
 
@@ -347,12 +423,18 @@ on:
     - cron: '0 1 * * *'  # 毎日午前10時（日本時間）に実行
   workflow_dispatch:  # 手動実行も可能
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   monitor:
     runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -364,6 +446,16 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: Cache hash file and snapshots
+      uses: actions/cache@v4
+      with:
+        path: |
+          last_hashes.json
+          html_snapshots/
+        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-monitor-
+    
     - name: Run monitor
       env:
         SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
@@ -372,6 +464,15 @@ jobs:
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         TO_EMAILS: ${{ secrets.TO_EMAILS }}
       run: python main.py
+    
+    - name: Commit changes
+      if: success()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add last_hashes.json html_snapshots/
+        git status
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
 ```
 
 ### 4.4 GitHub Secretsの設定
