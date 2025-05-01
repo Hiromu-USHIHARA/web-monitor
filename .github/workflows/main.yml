@@ -28,13 +28,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Cache hash file
+    - name: Cache hash file and snapshots
       uses: actions/cache@v4
       with:
-        path: last_hashes.json
-        key: ${{ runner.os }}-hashes-${{ hashFiles('urls.txt') }}
+        path: |
+          last_hashes.json
+          html_snapshots/
+        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
         restore-keys: |
-          ${{ runner.os }}-hashes-
+          ${{ runner.os }}-monitor-
     
     - name: Run monitor
       env:
@@ -50,5 +52,6 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add last_hashes.json
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update last_hashes.json" && git push)
+        git add last_hashes.json html_snapshots/
+        git status
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
