@@ -7,9 +7,11 @@
 ```
 ├── .github/
 │   └── workflows/
-│       └── main.yml      # GitHub Actionsの設定ファイル
-├── main.py              # メインのPythonスクリプト
-├── requirements.txt     # Pythonの依存パッケージ
+│       └── main.yml   # GitHub Actionsの設定ファイル
+├── html_snapshots/     # HTMLスナップショット保存用ディレクトリ
+│       └── .gitkeep     
+├── main.py             # メインのPythonスクリプト
+├── requirements.txt    # Pythonの依存パッケージ
 ├── urls.txt            # 監視対象のURLリスト
 ├── last_hashes.json    # 前回のページ内容のハッシュ値
 └── README.md           # このファイル
