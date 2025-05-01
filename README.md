@@ -53,32 +53,37 @@
    - エラーハンドリングを含む
    - 取得状況をログに記録
 
-7. `send_email(url, changes)`
-   - 更新通知のメールを送信
-   - SMTPサーバーを使用
-   - 複数のメールアドレスに対応
-
-8. `check_webpage_changes()`
-   - メインの監視処理
-   - 各URLの内容を取得し、前回のハッシュと比較
-   - 更新を検出した場合にメール通知
-   - URLの追加・削除を検出
-   - 変更のサマリーを表示
-
-9. `save_html(url, content)`
+7. `save_html(url, content)`
    - ウェブページのHTMLを保存
    - 差分抽出用のスナップショットとして使用
    - エラーハンドリングを含む
 
-10. `load_previous_html(url)`
-    - 前回保存したHTMLを読み込み
-    - 差分抽出の比較用に使用
-    - エラーハンドリングを含む
+8. `load_previous_html(url)`
+   - 前回保存したHTMLを読み込み
+   - 差分抽出の比較用に使用
+   - エラーハンドリングを含む
 
-11. `get_diff(previous_content, current_content)`
+9. `delete_html(url)`
+   - 指定したURLのHTMLスナップショットを削除
+   - URLが監視対象から削除された場合に自動実行
+   - エラーハンドリングを含む
+
+10. `get_diff(previous_content, current_content)`
     - 前回と現在のHTMLの差分を抽出
     - 統一形式（unified diff）で差分を表示
     - 変更内容の詳細な通知に使用
+
+11. `send_email(url, changes)`
+    - 更新通知のメールを送信
+    - SMTPサーバーを使用
+    - 複数のメールアドレスに対応
+
+12. `check_webpage_changes()`
+    - メインの監視処理
+    - 各URLの内容を取得し、前回のハッシュと比較
+    - 更新を検出した場合にメール通知
+    - URLの追加・削除を検出
+    - 変更のサマリーを表示
 
 ## 監視の種類
 1. ページの更新
@@ -155,8 +160,6 @@
 - 差分抽出はHTMLの行単位で行われ、変更箇所が明確に表示されます
 - GitHub Actionsのスケジュール実行では、設定時刻から最大数時間のズレが発生する可能性があります
 
-
-
 ## 更新履歴
 ### Apr. 29, 2025
 - 初回公開
@@ -168,3 +171,4 @@
   - `html_snapshots`ディレクトリに自動保存
   - 差分抽出機能を追加
   - GitHub Actionsでの自動管理機能を追加
+  - 監視対象URLが削除された場合にHTMLスナップショットを自動削除

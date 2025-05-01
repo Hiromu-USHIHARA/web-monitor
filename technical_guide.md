@@ -214,7 +214,7 @@ def load_urls():
 
 ### 2.7 HTMLスナップショット管理関数の実装
 
-ウェブページのHTMLを保存し、差分を抽出する関数を実装します。HTMLの読み込みと保存は、ページの内容が変更された場合のみ実行され、不要なディスクI/Oを削減します。
+ウェブページのHTMLを保存し、差分を抽出する関数を実装します。HTMLの読み込みと保存は、ページの内容が変更された場合のみ実行され、不要なディスクI/Oを削減します。また、監視対象のURLが削除された場合には、対応するHTMLスナップショットも自動的に削除されます。
 
 ```python
 # HTML保存ディレクトリのパス
@@ -275,7 +275,17 @@ def get_diff(previous_content, current_content):
         lineterm=''
     )
     return '\n'.join(diff)
-```
+
+# HTMLを削除
+def delete_html(url):
+    file_path = get_html_file_path(url)
+    print(f"HTML削除を試みます: {file_path}")
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"HTMLを削除しました: {file_path}")
+    except Exception as e:
+        print(f"HTMLの削除に失敗しました: {file_path} - {str(e)}")
 
 ### 2.8 メインの監視処理関数の実装
 
@@ -294,6 +304,8 @@ def check_webpage_changes():
         if url not in urls:
             removed_urls.append(url)
             print(f"URLが削除されました: {url}")
+            # HTMLスナップショットを削除
+            delete_html(url)
 
     # 追加されたURLを検出
     for url in urls:
