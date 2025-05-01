@@ -201,12 +201,6 @@ def check_webpage_changes():
         if not current_content:
             continue
 
-        # 前回のHTMLを読み込む
-        previous_content = load_previous_html(url)
-        
-        # 差分を抽出
-        diff = get_diff(previous_content, current_content)
-        
         # ページのメインコンテンツを抽出
         soup = BeautifulSoup(current_content, 'html.parser')
         main_content = soup.get_text()
@@ -219,15 +213,21 @@ def check_webpage_changes():
         if url in current_hashes:
             if current_hash != current_hashes[url]:
                 print(f"更新を検出: {url}")
+                # 前回のHTMLを読み込む
+                previous_content = load_previous_html(url)
+                # 差分を抽出
+                diff = get_diff(previous_content, current_content)
+                # 通知を送信
                 send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
+                # 現在のHTMLを保存
+                save_html(url, current_content)
             else:
                 print(f"更新なし: {url}")
         else:
             print(f"新しいURLの監視を開始: {url}")
             send_email(url, "新しいURLの監視を開始しました。")
-
-        # 現在のHTMLを保存（比較後に保存）
-        save_html(url, current_content)
+            # 初回のHTMLを保存
+            save_html(url, current_content)
 
     # 新しいハッシュを保存
     save_hashes(new_hashes)
