@@ -7,6 +7,8 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import json
 import hashlib
+import difflib
+from datetime import datetime
 
 # 環境変数の読み込み
 load_dotenv()
@@ -18,6 +20,53 @@ EMAIL_USER = os.getenv('EMAIL_USER')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 # 複数のメールアドレスをカンマ区切りで取得
 TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if email.strip()]
+
+# ハッシュファイルとHTML保存ディレクトリのパス
+HASH_FILE = 'last_hashes.json'
+HTML_DIR = 'html_snapshots'
+
+# HTML保存ディレクトリの初期化
+def initialize_html_dir():
+    if not os.path.exists(HTML_DIR):
+        os.makedirs(HTML_DIR)
+        print(f"HTML保存ディレクトリを作成しました: {HTML_DIR}")
+
+# HTMLファイルのパスを生成
+def get_html_file_path(url):
+    filename = hashlib.md5(url.encode()).hexdigest() + '.html'
+    return os.path.join(HTML_DIR, filename)
+
+# HTMLを保存
+def save_html(url, content):
+    file_path = get_html_file_path(url)
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"HTMLを保存しました: {file_path}")
+
+# 前回のHTMLを読み込む
+def load_previous_html(url):
+    file_path = get_html_file_path(url)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    return None
+
+# 差分を抽出
+def get_diff(previous_content, current_content):
+    if not previous_content:
+        return "初回の監視です。"
+    
+    previous_lines = previous_content.splitlines()
+    current_lines = current_content.splitlines()
+    
+    diff = difflib.unified_diff(
+        previous_lines,
+        current_lines,
+        fromfile='前回のHTML',
+        tofile='現在のHTML',
+        lineterm=''
+    )
+    return '\n'.join(diff)
 
 # ハッシュファイルのパス
 HASH_FILE = 'last_hashes.json'
@@ -133,6 +182,15 @@ def check_webpage_changes():
         if not current_content:
             continue
 
+        # HTMLを保存
+        save_html(url, current_content)
+        
+        # 前回のHTMLを読み込む
+        previous_content = load_previous_html(url)
+        
+        # 差分を抽出
+        diff = get_diff(previous_content, current_content)
+        
         # ページのメインコンテンツを抽出
         soup = BeautifulSoup(current_content, 'html.parser')
         main_content = soup.get_text()
@@ -145,7 +203,7 @@ def check_webpage_changes():
         if url in current_hashes:
             if current_hash != current_hashes[url]:
                 print(f"更新を検出: {url}")
-                send_email(url, "ページの内容が更新されました。")
+                send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
             else:
                 print(f"更新なし: {url}")
         else:
@@ -171,8 +229,9 @@ def check_webpage_changes():
 def main():
     print("ウェブページ監視を開始します...")
     
-    # ハッシュファイルの初期化
+    # ハッシュファイルとHTML保存ディレクトリの初期化
     initialize_hash_file()
+    initialize_html_dir()
     
     # ウェブページの変更をチェック
     check_webpage_changes()
