@@ -7,7 +7,7 @@
 ```
 ├── .github/
 │   └── workflows/
-│       └── main.yml   # GitHub Actionsの設定ファイル
+│       └── main.yml    # GitHub Actionsの設定ファイル
 ├── html_snapshots/     # HTMLスナップショット保存用ディレクトリ
 │       └── .gitkeep     
 ├── main.py             # メインのPythonスクリプト
