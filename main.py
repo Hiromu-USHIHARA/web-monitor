@@ -39,16 +39,35 @@ def get_html_file_path(url):
 # HTMLを保存
 def save_html(url, content):
     file_path = get_html_file_path(url)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-    print(f"HTMLを保存しました: {file_path}")
+    print(f"HTML保存を試みます: {file_path}")
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"HTMLを保存しました: {file_path}")
+    except Exception as e:
+        print(f"HTMLの保存に失敗しました: {file_path} - {str(e)}")
+        print(f"現在のディレクトリ: {os.getcwd()}")
+        print(f"ディレクトリの存在確認: {os.path.exists(HTML_DIR)}")
+        print(f"ディレクトリの権限: {oct(os.stat(HTML_DIR).st_mode)[-3:]}")
+        print(f"ファイルの権限: {oct(os.stat(file_path).st_mode)[-3:] if os.path.exists(file_path) else 'ファイルが存在しません'}")
 
 # 前回のHTMLを読み込む
 def load_previous_html(url):
     file_path = get_html_file_path(url)
-    if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return f.read()
+    print(f"前回のHTMLを読み込みます: {file_path}")
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                print(f"前回のHTMLを読み込みました: {file_path}")
+                return content
+        print(f"前回のHTMLが存在しません: {file_path}")
+    except Exception as e:
+        print(f"前回のHTMLの読み込みに失敗しました: {file_path} - {str(e)}")
+        print(f"現在のディレクトリ: {os.getcwd()}")
+        print(f"ディレクトリの存在確認: {os.path.exists(HTML_DIR)}")
+        print(f"ディレクトリの権限: {oct(os.stat(HTML_DIR).st_mode)[-3:]}")
+        print(f"ファイルの権限: {oct(os.stat(file_path).st_mode)[-3:] if os.path.exists(file_path) else 'ファイルが存在しません'}")
     return None
 
 # 差分を抽出
