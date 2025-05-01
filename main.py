@@ -201,9 +201,6 @@ def check_webpage_changes():
         if not current_content:
             continue
 
-        # HTMLを保存
-        save_html(url, current_content)
-        
         # 前回のHTMLを読み込む
         previous_content = load_previous_html(url)
         
@@ -228,6 +225,9 @@ def check_webpage_changes():
         else:
             print(f"新しいURLの監視を開始: {url}")
             send_email(url, "新しいURLの監視を開始しました。")
+
+        # 現在のHTMLを保存（比較後に保存）
+        save_html(url, current_content)
 
     # 新しいハッシュを保存
     save_hashes(new_hashes)
