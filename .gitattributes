@@ -1,0 +1,13 @@
+# HTMLスナップショットを除外
+html_snapshots/* linguist-generated
+html_snapshots/* -diff
+html_snapshots/* -text
+html_snapshots/* export-ignore
+
+# その他の設定
+*.py diff=python
+*.md diff=markdown
+*.json diff=json
+*.txt diff=text
+*.yml diff=yaml
+*.yaml diff=yaml 
