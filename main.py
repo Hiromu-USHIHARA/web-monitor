@@ -175,6 +175,17 @@ def send_email(url, changes):
     except Exception as e:
         print(f"メール送信に失敗: {e}")
 
+# HTMLを削除
+def delete_html(url):
+    file_path = get_html_file_path(url)
+    print(f"HTML削除を試みます: {file_path}")
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"HTMLを削除しました: {file_path}")
+    except Exception as e:
+        print(f"HTMLの削除に失敗しました: {file_path} - {str(e)}")
+
 # ウェブページの変更をチェック
 def check_webpage_changes():
     urls = load_urls()
@@ -188,6 +199,8 @@ def check_webpage_changes():
         if url not in urls:
             removed_urls.append(url)
             print(f"URLが削除されました: {url}")
+            # HTMLスナップショットを削除
+            delete_html(url)
 
     # 追加されたURLを検出
     for url in urls:
@@ -219,15 +232,15 @@ def check_webpage_changes():
                 diff = get_diff(previous_content, current_content)
                 # 通知を送信
                 send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
-                # 現在のHTMLを保存
+                # 現在のHTMLを保存（前回のHTMLは上書き）
                 save_html(url, current_content)
             else:
                 print(f"更新なし: {url}")
         else:
             print(f"新しいURLの監視を開始: {url}")
-            send_email(url, "新しいURLの監視を開始しました。")
             # 初回のHTMLを保存
             save_html(url, current_content)
+            send_email(url, "新しいURLの監視を開始しました。")
 
     # 新しいハッシュを保存
     save_hashes(new_hashes)
