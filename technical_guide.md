@@ -214,7 +214,7 @@ def load_urls():
 
 ### 2.7 HTMLスナップショット管理関数の実装
 
-ウェブページのHTMLを保存し、差分を抽出する関数を実装します。
+ウェブページのHTMLを保存し、差分を抽出する関数を実装します。HTMLの読み込みと保存は、ページの内容が変更された場合のみ実行され、不要なディスクI/Oを削減します。
 
 ```python
 # HTML保存ディレクトリのパス
@@ -279,7 +279,7 @@ def get_diff(previous_content, current_content):
 
 ### 2.8 メインの監視処理関数の実装
 
-ウェブページの更新を監視するメインの関数を実装します．
+ウェブページの更新を監視するメインの関数を実装します。HTMLの読み込みと保存は、ページの内容が変更された場合のみ実行され、処理の効率が向上しています。
 
 ```python
 def check_webpage_changes():
@@ -307,15 +307,6 @@ def check_webpage_changes():
         if not current_content:
             continue
 
-        # HTMLを保存
-        save_html(url, current_content)
-        
-        # 前回のHTMLを読み込む
-        previous_content = load_previous_html(url)
-        
-        # 差分を抽出
-        diff = get_diff(previous_content, current_content)
-        
         # ページのメインコンテンツを抽出
         soup = BeautifulSoup(current_content, 'html.parser')
         main_content = soup.get_text()
@@ -328,11 +319,20 @@ def check_webpage_changes():
         if url in current_hashes:
             if current_hash != current_hashes[url]:
                 print(f"更新を検出: {url}")
+                # 前回のHTMLを読み込む
+                previous_content = load_previous_html(url)
+                # 差分を抽出
+                diff = get_diff(previous_content, current_content)
+                # 通知を送信
                 send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
+                # 現在のHTMLを保存
+                save_html(url, current_content)
             else:
                 print(f"更新なし: {url}")
         else:
             print(f"新しいURLの監視を開始: {url}")
+            # 初回のHTMLを保存
+            save_html(url, current_content)
             send_email(url, "新しいURLの監視を開始しました。")
 
     # 新しいハッシュを保存
