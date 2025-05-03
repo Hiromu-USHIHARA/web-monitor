@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 import json
 import hashlib
 import difflib
+from datetime import datetime
 
 # 環境変数の読み込み
 load_dotenv()
@@ -20,8 +21,62 @@ EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 # 複数のメールアドレスをカンマ区切りで取得
 TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if email.strip()]
 
-# ハッシュファイルとHTML保存ディレクトリのパス
+# 監視対象のURLを読み込む
+def load_urls():
+    try:
+        with open('urls.txt', 'r') as f:
+            urls = [line.strip() for line in f if line.strip()]
+        print(f"監視対象URLを読み込みました: {len(urls)}件")
+        return urls
+    except Exception as e:
+        print(f"URLファイルの読み込みに失敗しました: {e}")
+        return []
+
+# ウェブページの内容を取得
+def get_page_content(url):
+    try:
+        print(f"URLの取得を開始: {url}")
+        response = requests.get(url)
+        response.raise_for_status()
+        print(f"URLの取得が成功: {url}")
+        return response.text
+    except requests.RequestException as e:
+        print(f"URLの取得に失敗: {url} - {e}")
+        return None
+
 HASH_FILE = 'last_hashes.json'
+
+# ハッシュファイルを初期化
+def initialize_hash_file():
+    if not os.path.exists(HASH_FILE):
+        with open(HASH_FILE, 'w') as f:
+            json.dump({}, f, indent=2)
+        print(f"ハッシュファイルを初期化しました: {HASH_FILE}")
+
+# ウェブページの内容からハッシュを生成
+def generate_hash(content):
+    return hashlib.md5(content.encode()).hexdigest()
+
+# ハッシュファイルを保存
+def save_hashes(hashes):
+    with open(HASH_FILE, 'w') as f:
+        json.dump(hashes, f, indent=2)
+
+# ハッシュファイルを読み込む
+def load_hashes():
+    try:
+        if os.path.exists(HASH_FILE):
+            with open(HASH_FILE, 'r') as f:
+                content = f.read()
+                if not content.strip():  # ファイルが空の場合
+                    return {}
+                return json.loads(content)
+        return {}
+    except json.JSONDecodeError:
+        print(f"ハッシュファイルの形式が不正です。初期化します。")
+        initialize_hash_file()
+        return {}
+
 HTML_DIR = 'html_snapshots'
 
 # HTML保存ディレクトリの初期化
@@ -86,62 +141,16 @@ def get_diff(previous_content, current_content):
     )
     return '\n'.join(diff)
 
-# ハッシュファイルのパス
-HASH_FILE = 'last_hashes.json'
-
-# ハッシュファイルを初期化
-def initialize_hash_file():
-    if not os.path.exists(HASH_FILE):
-        with open(HASH_FILE, 'w') as f:
-            json.dump({}, f, indent=2)
-        print(f"ハッシュファイルを初期化しました: {HASH_FILE}")
-
-# ハッシュファイルを読み込む
-def load_hashes():
+# HTMLを削除
+def delete_html(url):
+    file_path = get_html_file_path(url)
+    print(f"HTML削除を試みます: {file_path}")
     try:
-        if os.path.exists(HASH_FILE):
-            with open(HASH_FILE, 'r') as f:
-                content = f.read()
-                if not content.strip():  # ファイルが空の場合
-                    return {}
-                return json.loads(content)
-        return {}
-    except json.JSONDecodeError:
-        print(f"ハッシュファイルの形式が不正です。初期化します。")
-        initialize_hash_file()
-        return {}
-
-# ハッシュファイルを保存
-def save_hashes(hashes):
-    with open(HASH_FILE, 'w') as f:
-        json.dump(hashes, f, indent=2)
-
-# ウェブページの内容からハッシュを生成
-def generate_hash(content):
-    return hashlib.md5(content.encode()).hexdigest()
-
-# 監視対象のURLを読み込む
-def load_urls():
-    try:
-        with open('urls.txt', 'r') as f:
-            urls = [line.strip() for line in f if line.strip()]
-        print(f"監視対象URLを読み込みました: {len(urls)}件")
-        return urls
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"HTMLを削除しました: {file_path}")
     except Exception as e:
-        print(f"URLファイルの読み込みに失敗しました: {e}")
-        return []
-
-# ウェブページの内容を取得
-def get_page_content(url):
-    try:
-        print(f"URLの取得を開始: {url}")
-        response = requests.get(url)
-        response.raise_for_status()
-        print(f"URLの取得が成功: {url}")
-        return response.text
-    except requests.RequestException as e:
-        print(f"URLの取得に失敗: {url} - {e}")
-        return None
+        print(f"HTMLの削除に失敗しました: {file_path} - {str(e)}")
 
 # メールを送信
 def send_email(url, changes):
@@ -173,17 +182,6 @@ def send_email(url, changes):
         print(f"メール送信が成功: {url}")
     except Exception as e:
         print(f"メール送信に失敗: {e}")
-
-# HTMLを削除
-def delete_html(url):
-    file_path = get_html_file_path(url)
-    print(f"HTML削除を試みます: {file_path}")
-    try:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            print(f"HTMLを削除しました: {file_path}")
-    except Exception as e:
-        print(f"HTMLの削除に失敗しました: {file_path} - {str(e)}")
 
 # ウェブページの変更をチェック
 def check_webpage_changes():
