@@ -737,4 +737,4 @@ jobs:
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
 ```
 
-完成版のコードは[Githubｒリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
+完成版のコードは[Githubリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
