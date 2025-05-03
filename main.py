@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 import json
 import hashlib
 import difflib
-from datetime import datetime
 
 # 環境変数の読み込み
 load_dotenv()
