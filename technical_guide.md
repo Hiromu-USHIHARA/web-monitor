@@ -161,17 +161,6 @@ def initialize_hash_file():
 Webページの内容からハッシュを生成，保存します．
 
 ```python
-def get_page_content(url):
-    try:
-        print(f"URLの取得を開始: {url}")
-        response = requests.get(url)
-        response.raise_for_status()
-        print(f"URLの取得が成功: {url}")
-        return response.text
-    except requests.RequestException as e:
-        print(f"URLの取得に失敗: {url} - {e}")
-        return None
-
 def generate_hash(content):
     return hashlib.md5(content.encode()).hexdigest()
 
@@ -685,3 +674,67 @@ def main():
     
     print("ウェブページ監視を完了しました。")
 ```
+
+```diff yaml
+# .github/workflows/main.yml
+name: Web Page Monitor
+
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 毎日午前10時（日本時間）に実行
+  workflow_dispatch:  # 手動実行も可能
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Cache hash file and snapshots
+      uses: actions/cache@v4
+      with:
+        path: |
+          last_hashes.json
++          html_snapshots/
+        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-monitor-
+    
+    - name: Run monitor
+      env:
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        TO_EMAILS: ${{ secrets.TO_EMAILS }}
+      run: python main.py
+    
+    - name: Commit changes
+      if: success()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
++        git add last_hashes.json html_snapshots/
+-        git add last_hashes.json
+        git status
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
+```
+
+完成版のコードは[Githubｒリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
