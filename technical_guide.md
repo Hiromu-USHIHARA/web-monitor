@@ -739,4 +739,4 @@ jobs:
 以上でGithub Actionsで動かすWebページ自動監視ツールが出来上がりました．
 完成版のコードは[Githubリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
 
-“退屈なことはPythonにやらせ”て楽しいインターネットライフを！
+“退屈なことはPythonにやらせ”て楽しいインターネットライフを！^[すみません．読んでないです...]
