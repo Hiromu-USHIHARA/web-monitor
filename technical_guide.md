@@ -736,6 +736,9 @@ jobs:
         git status
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
 ```
+
+## おわりに
+
 以上でGithub Actionsで動かすWebページ自動監視ツールが出来上がりました．
 完成版のコードは[Githubリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
 
