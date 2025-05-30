@@ -55,12 +55,19 @@ def initialize_hash_file():
 
 # ウェブページの内容からハッシュを生成
 def generate_hash(content):
-    return hashlib.md5(content.encode()).hexdigest()
+    # テキストの正規化
+    normalized_content = ' '.join(content.split())
+    # エンコーディングを明示的に指定
+    return hashlib.md5(normalized_content.encode('utf-8')).hexdigest()
 
 # ハッシュファイルを保存
 def save_hashes(hashes):
-    with open(HASH_FILE, 'w') as f:
-        json.dump(hashes, f, indent=2)
+    try:
+        with open(HASH_FILE, 'w') as f:
+            json.dump(hashes, f, indent=2)
+        print(f"ハッシュを保存しました: {len(hashes)}件")
+    except Exception as e:
+        print(f"ハッシュの保存に失敗しました: {e}")
 
 # ハッシュファイルを読み込む
 def load_hashes():
@@ -187,7 +194,7 @@ def send_email(url, changes):
 def check_webpage_changes():
     urls = load_urls()
     current_hashes = load_hashes()
-    new_hashes = {}
+    new_hashes = current_hashes.copy()  # 現在のハッシュをコピー
     added_urls = []
     removed_urls = []
 
@@ -198,6 +205,8 @@ def check_webpage_changes():
             print(f"URLが削除されました: {url}")
             # HTMLスナップショットを削除
             delete_html(url)
+            # ハッシュからも削除
+            new_hashes.pop(url, None)
 
     # 追加されたURLを検出
     for url in urls:
@@ -207,41 +216,51 @@ def check_webpage_changes():
 
     for url in urls:
         print(f"URLの監視を開始: {url}")
-        current_content = get_page_content(url)
-        if not current_content:
-            continue
+        try:
+            current_content = get_page_content(url)
+            if not current_content:
+                print(f"警告: {url}のコンテンツ取得に失敗しました。前回のハッシュを維持します。")
+                continue
 
-        # ページのメインコンテンツを抽出
-        soup = BeautifulSoup(current_content, 'html.parser')
-        main_content = soup.get_text()
-        
-        # ハッシュを生成
-        current_hash = generate_hash(main_content)
-        new_hashes[url] = current_hash
+            # ページのメインコンテンツを抽出
+            soup = BeautifulSoup(current_content, 'html.parser')
+            main_content = soup.get_text()
+            
+            # ハッシュを生成
+            current_hash = generate_hash(main_content)
+            new_hashes[url] = current_hash
 
-        # 前回のハッシュと比較
-        if url in current_hashes:
-            if current_hash != current_hashes[url]:
-                print(f"更新を検出: {url}")
-                # 前回のHTMLを読み込む
-                previous_content = load_previous_html(url)
-                # 差分を抽出
-                diff = get_diff(previous_content, current_content)
-                # 通知を送信
-                send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
-                # 現在のHTMLを保存（前回のHTMLは上書き）
-                save_html(url, current_content)
+            # 前回のハッシュと比較
+            if url in current_hashes:
+                if current_hash != current_hashes[url]:
+                    print(f"更新を検出: {url}")
+                    print(f"前回のハッシュ: {current_hashes[url]}")
+                    print(f"現在のハッシュ: {current_hash}")
+                    # 前回のHTMLを読み込む
+                    previous_content = load_previous_html(url)
+                    # 差分を抽出
+                    diff = get_diff(previous_content, current_content)
+                    # 通知を送信
+                    send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
+                    # 現在のHTMLを保存（前回のHTMLは上書き）
+                    save_html(url, current_content)
+                else:
+                    print(f"更新なし: {url}")
             else:
-                print(f"更新なし: {url}")
-        else:
-            print(f"新しいURLの監視を開始: {url}")
-            # 初回のHTMLを保存
-            save_html(url, current_content)
-            send_email(url, "新しいURLの監視を開始しました。")
+                print(f"新しいURLの監視を開始: {url}")
+                # 初回のHTMLを保存
+                save_html(url, current_content)
+                send_email(url, "新しいURLの監視を開始しました。")
+        except Exception as e:
+            print(f"エラー: {url}の処理中にエラーが発生しました: {e}")
+            print(f"前回のハッシュを維持します。")
+            continue
 
     # 新しいハッシュを保存
     save_hashes(new_hashes)
     print("すべてのURLの監視が完了しました")
+    print(f"処理したURL数: {len(urls)}")
+    print(f"更新されたURL数: {sum(1 for url in urls if url in current_hashes and new_hashes[url] != current_hashes[url])}")
 
     # 変更のサマリーを表示
     if added_urls or removed_urls:
