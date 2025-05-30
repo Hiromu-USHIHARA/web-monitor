@@ -242,14 +242,18 @@ def check_webpage_changes():
                     diff = get_diff(previous_content, current_content)
                     # 通知を送信
                     send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
-                    # 現在のHTMLを保存（前回のHTMLは上書き）
+                    # 前回のHTMLを削除
+                    delete_html(url)
+                    print(f"前回のHTMLを削除しました: {url}")
                     save_html(url, current_content)
+                    print(f"HTMLを保存しました: {url}")
                 else:
                     print(f"更新なし: {url}")
             else:
                 print(f"新しいURLの監視を開始: {url}")
                 # 初回のHTMLを保存
                 save_html(url, current_content)
+                print(f"HTMLを保存しました: {url}")
                 send_email(url, "新しいURLの監視を開始しました。")
         except Exception as e:
             print(f"エラー: {url}の処理中にエラーが発生しました: {e}")
