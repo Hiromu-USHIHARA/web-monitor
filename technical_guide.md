@@ -65,6 +65,7 @@ pip install requests beautifulsoup4 python-dotenv
    https://example.com/page2
    ```
    監視対象のWebページのURLです．
+    > URLの末尾に`/`がついていると正常に動作しないことがあります．
 
 3. `.env`ファイルの作成
    ```
@@ -738,7 +739,6 @@ jobs:
 ```
 
 ## おわりに
-
 以上でGithub Actionsで動かすWebページ自動監視ツールが出来上がりました．
 完成版のコードは[Githubリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
 
