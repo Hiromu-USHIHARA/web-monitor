@@ -1,3 +1,4 @@
+
 ## 概要
 
 この記事では[Github Actions](https://docs.github.com/ja/actions)を利用して，Webページの更新を定期監視してメールで通知するシステムを構築します．
@@ -11,6 +12,8 @@
 - 環境変数による設定管理
 
 環境構築からコード実装，Github Actionsのセットアップまでステップバイステップに進めていきます．
+
+> この記事は[Zennでも公開](https://zenn.dev/hiromu_ushihara/articles/3157e21cfd877a)しています．
 
 ## 1. プロジェクトの準備
 
