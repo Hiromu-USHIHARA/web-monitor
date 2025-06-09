@@ -55,8 +55,10 @@ def initialize_hash_file():
 
 # ウェブページの内容からハッシュを生成
 def generate_hash(content):
-    # テキストの正規化
-    normalized_content = ' '.join(content.split())
+    # テキストの正規化（HTMLタグを除去してから正規化）
+    soup = BeautifulSoup(content, 'html.parser')
+    text_content = soup.get_text()
+    normalized_content = ' '.join(text_content.split())
     # エンコーディングを明示的に指定
     return hashlib.md5(normalized_content.encode('utf-8')).hexdigest()
 
@@ -222,12 +224,8 @@ def check_webpage_changes():
                 print(f"警告: {url}のコンテンツ取得に失敗しました。前回のハッシュを維持します。")
                 continue
 
-            # ページのメインコンテンツを抽出
-            soup = BeautifulSoup(current_content, 'html.parser')
-            main_content = soup.get_text()
-            
-            # ハッシュを生成
-            current_hash = generate_hash(main_content)
+            # ハッシュを生成（完全なHTMLコンテンツから）
+            current_hash = generate_hash(current_content)
             new_hashes[url] = current_hash
 
             # 前回のハッシュと比較
