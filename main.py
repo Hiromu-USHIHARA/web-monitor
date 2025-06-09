@@ -209,6 +209,8 @@ def check_webpage_changes():
             delete_html(url)
             # ハッシュからも削除
             new_hashes.pop(url, None)
+            # 変更を即時保存
+            save_hashes(new_hashes)
 
     # 追加されたURLを検出
     for url in urls:
@@ -240,11 +242,13 @@ def check_webpage_changes():
                     diff = get_diff(previous_content, current_content)
                     # 通知を送信
                     send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
-                    # 前回のHTMLを削除
+                    # 前回のHTMLを削除して新しいHTMLを保存
                     delete_html(url)
                     print(f"前回のHTMLを削除しました: {url}")
                     save_html(url, current_content)
                     print(f"HTMLを保存しました: {url}")
+                    # 変更を即時保存
+                    save_hashes(new_hashes)
                 else:
                     print(f"更新なし: {url}")
             else:
@@ -252,14 +256,14 @@ def check_webpage_changes():
                 # 初回のHTMLを保存
                 save_html(url, current_content)
                 print(f"HTMLを保存しました: {url}")
+                # 変更を即時保存
+                save_hashes(new_hashes)
                 send_email(url, "新しいURLの監視を開始しました。")
         except Exception as e:
             print(f"エラー: {url}の処理中にエラーが発生しました: {e}")
             print(f"前回のハッシュを維持します。")
             continue
 
-    # 新しいハッシュを保存
-    save_hashes(new_hashes)
     print("すべてのURLの監視が完了しました")
     print(f"処理したURL数: {len(urls)}")
     print(f"更新されたURL数: {sum(1 for url in urls if url in current_hashes and new_hashes[url] != current_hashes[url])}")
