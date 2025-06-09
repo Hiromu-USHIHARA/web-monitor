@@ -9,8 +9,6 @@ import json
 import hashlib
 import difflib
 from datetime import datetime
-import fcntl
-import time
 
 # 環境変数の読み込み
 load_dotenv()
@@ -67,39 +65,32 @@ def generate_hash(content):
 # ハッシュファイルを保存
 def save_hashes(hashes):
     try:
+        print(f"ハッシュを保存します: {hashes}")  # デバッグ用
         with open(HASH_FILE, 'w') as f:
-            # ファイルロックを取得
-            fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-            try:
-                json.dump(hashes, f, indent=2)
-                f.flush()  # バッファを強制的に書き込み
-                os.fsync(f.fileno())  # ディスクに確実に書き込み
-            finally:
-                # ファイルロックを解放
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            json.dump(hashes, f, indent=2)
         print(f"ハッシュを保存しました: {len(hashes)}件")
     except Exception as e:
         print(f"ハッシュの保存に失敗しました: {e}")
-        raise  # エラーを上位に伝播させる
 
 # ハッシュファイルを読み込む
 def load_hashes():
     try:
         if os.path.exists(HASH_FILE):
+            print(f"ハッシュファイルを読み込みます: {HASH_FILE}")
             with open(HASH_FILE, 'r') as f:
-                # ファイルロックを取得
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-                try:
-                    content = f.read()
-                    if not content.strip():  # ファイルが空の場合
-                        return {}
-                    return json.loads(content)
-                finally:
-                    # ファイルロックを解放
-                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                content = f.read()
+                print(f"読み込んだ内容: {content}")  # デバッグ用
+                if not content.strip():  # ファイルが空の場合
+                    print("ハッシュファイルが空です")
+                    return {}
+                hashes = json.loads(content)
+                print(f"読み込んだハッシュ: {hashes}")  # デバッグ用
+                return hashes
+        print(f"ハッシュファイルが存在しません: {HASH_FILE}")
         return {}
-    except json.JSONDecodeError:
-        print(f"ハッシュファイルの形式が不正です。初期化します。")
+    except json.JSONDecodeError as e:
+        print(f"ハッシュファイルの形式が不正です: {e}")
+        print(f"ファイルの内容: {content}")  # デバッグ用
         initialize_hash_file()
         return {}
     except Exception as e:
@@ -231,8 +222,6 @@ def check_webpage_changes():
             new_hashes.pop(url, None)
             # 変更を即時保存
             save_hashes(new_hashes)
-            # 保存の完了を待機
-            time.sleep(0.1)
 
     # 追加されたURLを検出
     for url in urls:
@@ -271,8 +260,6 @@ def check_webpage_changes():
                     print(f"HTMLを保存しました: {url}")
                     # 変更を即時保存
                     save_hashes(new_hashes)
-                    # 保存の完了を待機
-                    time.sleep(0.1)
                 else:
                     print(f"更新なし: {url}")
             else:
@@ -282,8 +269,6 @@ def check_webpage_changes():
                 print(f"HTMLを保存しました: {url}")
                 # 変更を即時保存
                 save_hashes(new_hashes)
-                # 保存の完了を待機
-                time.sleep(0.1)
                 send_email(url, "新しいURLの監視を開始しました。")
         except Exception as e:
             print(f"エラー: {url}の処理中にエラーが発生しました: {e}")
