@@ -34,8 +34,9 @@ jobs:
         path: |
           last_hashes.json
           html_snapshots/
-        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
+        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}-${{ github.run_id }}
         restore-keys: |
+          ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}-
           ${{ runner.os }}-monitor-
     
     - name: Run monitor
