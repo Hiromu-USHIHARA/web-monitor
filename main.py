@@ -79,7 +79,6 @@ def load_hashes():
             print(f"ハッシュファイルを読み込みます: {HASH_FILE}")
             with open(HASH_FILE, 'r') as f:
                 content = f.read()
-                print(f"読み込んだ内容: {content}")  # デバッグ用
                 if not content.strip():  # ファイルが空の場合
                     print("ハッシュファイルが空です")
                     return {}
