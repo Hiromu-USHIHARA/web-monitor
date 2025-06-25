@@ -57,7 +57,7 @@ pip install requests beautifulsoup4 python-dotenv
 
 1. `requirements.txt`の作成
    ```
-   requests==2.31.0
+   requests==2.32.4
    beautifulsoup4==4.12.2
    python-dotenv==1.0.0
    ```
