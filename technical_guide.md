@@ -1,4 +1,3 @@
-
 ## 概要
 
 この記事では[Github Actions](https://docs.github.com/ja/actions)を利用して，Webページの更新を定期監視してメールで通知するシステムを構築します．
@@ -12,8 +11,6 @@
 - 環境変数による設定管理
 
 環境構築からコード実装，Github Actionsのセットアップまでステップバイステップに進めていきます．
-
-> この記事は[Zennでも公開](https://zenn.dev/hiromu_ushihara/articles/3157e21cfd877a)しています．
 
 ## 1. プロジェクトの準備
 
@@ -56,14 +53,14 @@ pip install requests beautifulsoup4 python-dotenv
 プロジェクトに必要な基本ファイルを作成します．
 
 1. `requirements.txt`の作成
-   ```
+   ```txt: requirements.txt
    requests==2.32.4
    beautifulsoup4==4.12.2
    python-dotenv==1.0.0
    ```
 
 2. `urls.txt`の作成
-   ```
+   ```txt: urls.txt
    https://example.com/page1
    https://example.com/page2
    ```
@@ -71,7 +68,7 @@ pip install requests beautifulsoup4 python-dotenv
     > URLの末尾に`/`がついていると正常に動作しないことがあります．
 
 3. `.env`ファイルの作成
-   ```
+   ```bash: .env
    SMTP_SERVER=smtp.gmail.com
    SMTP_PORT=587
    EMAIL_USER=your_email@gmail.com
@@ -84,7 +81,7 @@ pip install requests beautifulsoup4 python-dotenv
    - `TO_EMAILS`: `,`区切りで送信先のメールアドレスを記述します．
 
 4. `.gitignore`ファイルの作成
-   ```
+   ```bash: .gitignore
    .env
    .venv
    ```
@@ -101,7 +98,7 @@ touch main.py
 ### 2.1 準備
 
 必要なライブラリのインポートと環境変数の読み込みを行います．
-```python
+```python: main.py
 import os
 import requests
 from bs4 import BeautifulSoup
@@ -125,7 +122,7 @@ TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if
 
 `urls.txt`ファイルに記載されたURLからWebページの内容にアクセスする機能を実装します．
 
-```python
+```python: main.py
 def load_urls():
     try:
         with open('urls.txt', 'r') as f:
@@ -152,7 +149,7 @@ def get_page_content(url):
 
 Webページの更新を検知するためには前回アクセス時の情報との比較が必要です．ここではハッシュ値を`last_hashes.json`というファイルに保存しておき，その情報との比較を行うことで更新を検知することにします．
 
-```python
+```python: main.py
 HASH_FILE = 'last_hashes.json'
 
 def initialize_hash_file():
@@ -164,7 +161,7 @@ def initialize_hash_file():
 
 Webページの内容からハッシュを生成，保存します．
 
-```python
+```python: main.py
 def generate_hash(content):
     return hashlib.md5(content.encode()).hexdigest()
 
@@ -176,7 +173,7 @@ def save_hashes(hashes):
 
 ハッシュファイルの読み込みも実装しておきます．
 
-```python
+```python: main.py
 def load_hashes():
     try:
         if os.path.exists(HASH_FILE):
@@ -196,7 +193,7 @@ def load_hashes():
 
 続いてWebページの更新をメールで通知する機能を実装します．
 
-```python
+```python: main.py
 def send_email(url):
     if not TO_EMAILS:
         print("警告: 送信先メールアドレスが設定されていません")
@@ -229,7 +226,7 @@ def send_email(url):
 
 次にハッシュ値の比較から変更を検出する機能を実装します．
 
-```python
+```python: main.py
 def check_webpage_changes():
     urls = load_urls()
     current_hashes = load_hashes()
@@ -266,7 +263,7 @@ def check_webpage_changes():
 ここまでで，URLの読み込み，ハッシュ値の保存・読み込み，変更の検出，メールの送信という一連の流れに必要な機能が準備できました．
 これらを組み合わせて，`main`関数を実装します．
 
-```python
+```python: main.py
 def main():
     print("ウェブページ監視を開始します...")
     
@@ -319,7 +316,7 @@ git push -u origin main
 
 `.github/workflows/main.yml`を作成し，GitHub Actionsの設定を行います．
 
-```yaml
+```yaml: .github/workflows/main.yml
 name: Web Page Monitor
 
 on:
@@ -350,14 +347,71 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Cache hash file and snapshots
-      uses: actions/cache@v4
+    - name: Run monitor
+      env:
+        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        TO_EMAILS: ${{ secrets.TO_EMAILS }}
+      run: python main.py
+    
+    - name: Commit changes
+      if: success()
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add last_hashes.json html_snapshots/
+        git status
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
+```
+
+上のファイルについて，順を追って解説していきます．
+まず，
+```yml: .github/workflows/main.yml
+name: Web Page Monitor
+```
+ではワークフローを識別するための名前を設定しています．
+
+```yml: .github/workflows/main.yml
+on:
+  schedule:
+    - cron: '0 1 * * *'  # 毎日午前10時（日本時間）に実行
+  workflow_dispatch:  # 手動実行も可能
+```
+では実行のタイミング（トリガー）を指定しています．
+今回は決まった時間と手動での起動時に実行されるようにしています．
+
+ワークフローがリポジトリに対して行うことのできる権限を設定します．
+```yml: .github/workflows/main.yml
+permissions:
+  contents: write
+  pull-requests: write
+```
+ここでは，書き込みとプルリクエスト作成を許可しています．
+
+```yml: .github/workflows/main.yml
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+```
+で，`monitor`という名前のジョブをGithubが提供する最新版のUbuntuで実行するようにしています．
+具体的な内容は以下の`steps`の項目で設定されます．
+```yml: .github/workflows/main.yml
+    steps:
+    - uses: actions/checkout@v4
       with:
-        path: |
-          last_hashes.json
-        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-monitor-
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
     
     - name: Run monitor
       env:
@@ -373,7 +427,7 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add last_hashes.json
+        git add last_hashes.json html_snapshots/
         git status
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
 ```
@@ -409,7 +463,7 @@ jobs:
 `urls.txt`に新しいURLが追加された場合や，逆に削除された場合の処理を実装します．
 `check_webpage_changes`関数を変更します．
 
-```diff python
+```diff python: main.py
 def check_webpage_changes():
     urls = load_urls()
     current_hashes = load_hashes()
@@ -481,7 +535,7 @@ def check_webpage_changes():
 
 WebページのHTMLを保存し，差分を抽出する機能を実装します．
 
-```python
+```python: main.py
 # HTML保存ディレクトリのパス
 HTML_DIR = 'html_snapshots'
 
@@ -560,7 +614,7 @@ def delete_html(url):
 
 変更内容をこれまでの機能に反映していきます．
 
-```diff python
+```diff python: main.py
 + def send_email(url, changes):
 - def send_email(url):
     if not TO_EMAILS:
@@ -593,7 +647,7 @@ def delete_html(url):
         print(f"メール送信に失敗: {e}")
 ```
 
-```diff python
+```diff python: main.py
 def check_webpage_changes():
     urls = load_urls()
     current_hashes = load_hashes()
@@ -679,8 +733,7 @@ def main():
     print("ウェブページ監視を完了しました。")
 ```
 
-```diff yaml
-# .github/workflows/main.yml
+```diff yaml: .github/workflows/main.yml
 name: Web Page Monitor
 
 on:
@@ -710,16 +763,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-    
-    - name: Cache hash file and snapshots
-      uses: actions/cache@v4
-      with:
-        path: |
-          last_hashes.json
-+          html_snapshots/
-        key: ${{ runner.os }}-monitor-${{ hashFiles('urls.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-monitor-
     
     - name: Run monitor
       env:
