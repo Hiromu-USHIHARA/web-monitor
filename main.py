@@ -187,7 +187,7 @@ def summarize_diff_with_openai(diff, url):
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
         
         # 差分が長すぎる場合は切り詰める（OpenAI APIの制限を考慮）
-        max_diff_length = 8000  # 安全マージン
+        max_diff_length = 25000  # 安全マージン
         if len(diff) > max_diff_length:
             diff = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
         
