@@ -38,6 +38,7 @@ jobs:
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         TO_EMAILS: ${{ secrets.TO_EMAILS }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: python main.py
     
     - name: Commit changes
