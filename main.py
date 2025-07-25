@@ -9,6 +9,7 @@ import json
 import hashlib
 import difflib
 from datetime import datetime
+import openai
 
 # 環境変数の読み込み
 load_dotenv()
@@ -20,6 +21,10 @@ EMAIL_USER = os.getenv('EMAIL_USER')
 EMAIL_PASSWORD = os.getenv('EMAIL_PASSWORD')
 # 複数のメールアドレスをカンマ区切りで取得
 TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if email.strip()]
+
+# OpenAI設定
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_MODEL = 'gpt-4.1-nano'
 
 # 監視対象のURLを読み込む
 def load_urls():
@@ -171,6 +176,53 @@ def delete_html(url):
     except Exception as e:
         print(f"HTMLの削除に失敗しました: {file_path} - {str(e)}")
 
+# OpenAI APIを使って差分を要約
+def summarize_diff_with_openai(diff, url):
+    if not OPENAI_API_KEY:
+        print("警告: OpenAI APIキーが設定されていません。差分をそのまま返します。")
+        return diff
+    
+    try:
+        print("OpenAI APIを使用して差分を要約します...")
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        
+        # 差分が長すぎる場合は切り詰める（OpenAI APIの制限を考慮）
+        max_diff_length = 25000  # 安全マージン
+        if len(diff) > max_diff_length:
+            diff = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
+        
+        prompt = f"""
+以下のウェブページの差分を日本語で要約してください。
+URL: {url}
+
+差分:
+{diff}
+"""
+        
+        # 最新版のresponses APIを使用
+        response = client.responses.create(
+            model=OPENAI_MODEL,
+            input=prompt,
+            instructions="あなたはウェブページの変更内容を要約する専門家です。"
+        )
+        
+        summary = response.output_text.strip()
+        print("OpenAI APIによる要約が完了しました")
+        return f"【AI要約】\n{summary}\n\n【詳細差分】\n{diff}"
+        
+    except openai.AuthenticationError:
+        print("エラー: OpenAI APIキーが無効です。差分をそのまま返します。")
+        return diff
+    except openai.RateLimitError:
+        print("エラー: OpenAI APIのレート制限に達しました。差分をそのまま返します。")
+        return diff
+    except openai.InsufficientQuotaError:
+        print("エラー: OpenAI APIのクレジットが不足しています。差分をそのまま返します。")
+        return diff
+    except Exception as e:
+        print(f"エラー: OpenAI APIの呼び出しに失敗しました: {e}。差分をそのまま返します。")
+        return diff
+
 # メールを送信
 def send_email(url, changes):
     if not TO_EMAILS:
@@ -250,8 +302,10 @@ def check_webpage_changes():
                     previous_content = load_previous_html(url)
                     # 差分を抽出
                     diff = get_diff(previous_content, current_content)
+                    # 差分を要約
+                    summarized_diff = summarize_diff_with_openai(diff, url)
                     # 通知を送信
-                    send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
+                    send_email(url, summarized_diff)
                     # 前回のHTMLを削除して新しいHTMLを保存
                     delete_html(url)
                     print(f"前回のHTMLを削除しました: {url}")
