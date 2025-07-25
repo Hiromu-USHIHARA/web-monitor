@@ -199,17 +199,14 @@ URL: {url}
 {diff}
 """
         
-        response = client.chat.completions.create(
+        # 最新版のresponses APIを使用
+        response = client.responses.create(
             model=OPENAI_MODEL,
-            messages=[
-                {"role": "system", "content": "あなたはウェブページの変更内容を要約する専門家です。"},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=1000,
-            temperature=0.3
+            input=prompt,
+            instructions="あなたはウェブページの変更内容を要約する専門家です。"
         )
         
-        summary = response.choices[0].message.content.strip()
+        summary = response.output_text.strip()
         print("OpenAI APIによる要約が完了しました")
         return f"【AI要約】\n{summary}\n\n【詳細差分】\n{diff}"
         
