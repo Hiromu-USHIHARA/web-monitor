@@ -172,7 +172,6 @@
      - EMAIL_PASSWORD
      - TO_EMAILS（カンマ区切りのメールアドレスリスト）
      - OPENAI_API_KEY（OpenAI APIキー）
-     - OPENAI_MODEL（使用するモデル、デフォルト: gpt-3.5-turbo）
 
 2. ワークフローの設定
    - デフォルトで毎日午前10時（日本時間）に実行
