@@ -189,14 +189,14 @@ def summarize_diff_with_openai(diff, url):
         # 差分が長すぎる場合は切り詰める（OpenAI APIの制限を考慮）
         max_diff_length = 25000  # 安全マージン
         if len(diff) > max_diff_length:
-            diff = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
+            diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
         
         prompt = f"""
 以下のウェブページの差分を日本語で要約してください。
 URL: {url}
 
 差分:
-{diff}
+{diff_short}
 """
         
         # 最新版のresponses APIを使用
