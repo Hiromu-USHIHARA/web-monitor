@@ -106,13 +106,20 @@
     - 変更のサマリーを表示
     - 詳細なログ出力
 
+13. `summarize_diff_with_openai(diff, url)`
+    - OpenAI APIを使用して差分を要約
+    - 差分が長すぎる場合は自動的に切り詰め
+    - APIキーが設定されていない場合は差分をそのまま返す
+    - 認証エラー、レート制限、クレジット不足等のエラーハンドリング
+    - AI要約と詳細差分の両方を通知に含める
+
 ## 監視の種類
 1. ページの更新
    - ページの内容が変更された場合に通知
    - ハッシュ値の比較により検出
    - HTMLの差分を抽出して通知
    - 変更箇所の詳細な表示
-   - **AI要約機能**: OpenAI APIを使用して差分を要約し、理解しやすい形で通知
+   - OpenAI APIを使用して差分を要約し、理解しやすい形で通知
 
 2. URLの追加
    - 新しいURLが追加された場合に通知
@@ -141,7 +148,6 @@
    EMAIL_PASSWORD=your_app_password
    TO_EMAILS=user1@example.com,user2@example.com,user3@example.com
    OPENAI_API_KEY=your_openai_api_key
-   OPENAI_MODEL=gpt-3.5-turbo
    ```
 
 3. 監視対象URLの設定
