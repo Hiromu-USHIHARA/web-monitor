@@ -190,6 +190,8 @@ def summarize_diff_with_openai(diff, url):
         max_diff_length = 25000  # 安全マージン
         if len(diff) > max_diff_length:
             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
+        else:
+            diff_short = diff
         
         prompt = f"""
 以下のウェブページの差分を日本語で要約してください。
@@ -215,7 +217,7 @@ def summarize_diff_with_openai(diff, url):
     except openai.RateLimitError:
         print("エラー: OpenAI APIのレート制限に達しました。差分をそのまま返します。")
         return diff
-    except openai.InsufficientQuotaError:
+    except openai.QuotaExceededError:
         print("エラー: OpenAI APIのクレジットが不足しています。差分をそのまま返します。")
         return diff
     except Exception as e:
