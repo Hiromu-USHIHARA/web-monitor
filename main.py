@@ -190,6 +190,8 @@ def summarize_diff_with_openai(diff, url):
         max_diff_length = 25000  # 安全マージン
         if len(diff) > max_diff_length:
             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
+        else:
+            diff_short = diff
         
         prompt = f"""
 以下のウェブページの差分を日本語で要約してください。
@@ -205,7 +207,16 @@ def summarize_diff_with_openai(diff, url):
             instructions="あなたはウェブページの変更内容を要約する専門家です。"
         )
         
+        # レスポンスの検証
+        if not response or not hasattr(response, 'output_text'):
+            print("警告: OpenAI APIからのレスポンスが不正です。差分をそのまま返します。")
+            return diff
+        
         summary = response.output_text.strip()
+        if not summary:
+            print("警告: OpenAI APIからの要約が空です。差分をそのまま返します。")
+            return diff
+            
         print("OpenAI APIによる要約が完了しました")
         return f"【AI要約】\n{summary}\n\n【詳細差分】\n{diff}"
         
@@ -215,8 +226,17 @@ def summarize_diff_with_openai(diff, url):
     except openai.RateLimitError:
         print("エラー: OpenAI APIのレート制限に達しました。差分をそのまま返します。")
         return diff
-    except openai.InsufficientQuotaError:
+    except openai.QuotaExceededError:
         print("エラー: OpenAI APIのクレジットが不足しています。差分をそのまま返します。")
+        return diff
+    except openai.BadRequestError as e:
+        print(f"エラー: OpenAI APIのリクエストが不正です: {e}。差分をそのまま返します。")
+        return diff
+    except openai.APIConnectionError:
+        print("エラー: OpenAI APIへの接続に失敗しました。差分をそのまま返します。")
+        return diff
+    except openai.APITimeoutError:
+        print("エラー: OpenAI APIのタイムアウトが発生しました。差分をそのまま返します。")
         return diff
     except Exception as e:
         print(f"エラー: OpenAI APIの呼び出しに失敗しました: {e}。差分をそのまま返します。")
