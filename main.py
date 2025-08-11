@@ -194,7 +194,8 @@ def summarize_diff_with_openai(diff, url):
             diff_short = diff
         
         prompt = f"""
-以下のウェブページの差分を日本語で要約してください。
+以下はWebページの更新の差分です
+更新内容を日本語で要約してください
 
 差分:
 {diff_short}
