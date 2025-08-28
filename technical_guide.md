@@ -1,3 +1,15 @@
+---
+title: "Github Actionsで作るウェブページ更新監視ツール"
+emoji: "📸"
+type: "tech"
+topics:
+  - "github"
+  - "python"
+  - "githubactions"
+published: true
+published_at: "2025-05-03 17:57"
+---
+
 ## 概要
 
 この記事では[Github Actions](https://docs.github.com/ja/actions)を利用して，Webページの更新を定期監視してメールで通知するシステムを構築します．
@@ -788,4 +800,12 @@ jobs:
 以上でGithub Actionsで動かすWebページ自動監視ツールが出来上がりました．
 完成版のコードは[Githubリポジトリ](https://github.com/Hiromu-USHIHARA/web-monitor.git)で公開しています．
 
+@[card](https://github.com/Hiromu-USHIHARA/web-monitor.git)
+
 “退屈なことはPythonにやらせ”て楽しいインターネットライフを！^[すみません．読んでないです...]
+
+### 続編
+AIを利用して更新内容を要約する機能を追加しました（Githubのコードは更新後のものになっています）．
+追加した機能については以下の記事で紹介していますので，ご覧ください^[環境変数としてOpenAI APIのキーが設定されていない場合には，警告文が表示されるだけで，この記事で実装したものと実用上は変わらない挙動を示すはずです．ご安心ください．]．
+
+@[card](https://zenn.dev/hiromu_ushihara/articles/550c9f0bf109ab)
