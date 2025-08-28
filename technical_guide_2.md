@@ -3,15 +3,18 @@ title: "Github Actionsで作るウェブページ更新監視ツール（AI要�
 emoji: "👀"
 type: "tech"
 topics:
-  - "github"
   - "python"
   - "githubactions"
   - "openai"
-published: false
+  - "zennfes2025free"
+published: true
+published_at: "2025-08-28 17:24"
 ---
 
 この記事では，[以前の記事](https://zenn.dev/hiromu_ushihara/articles/3157e21cfd877a)で作成したWebページ更新監視ツールに，機能を追加します．
 具体的には，OpenAI APIを利用して，更新があったページの更新内容の差分を要約して通知する機能を実装します．
+
+@[card](https://zenn.dev/hiromu_ushihara/articles/3157e21cfd877a)
 
 ## 現行版の問題点と改善案
 
@@ -136,6 +139,8 @@ def delete_html(url):
 +         max_diff_length = 25000  # 安全マージン
 +         if len(diff) > max_diff_length:
 +             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
++         else:
++             diff_short=diff
 +         
 +         prompt = f"""
 + 以下のウェブページの差分を日本語で要約してください。
@@ -161,7 +166,7 @@ def delete_html(url):
 +     except openai.RateLimitError:
 +         print("エラー: OpenAI APIのレート制限に達しました。差分をそのまま返します。")
 +         return diff
-+     except openai.InsufficientQuotaError:
++     except openai.QuotaExceededError:
 +         print("エラー: OpenAI APIのクレジットが不足しています。差分をそのまま返します。")
 +         return diff
 +     except Exception as e:
@@ -173,7 +178,8 @@ def send_email(url, changes):
     # 中略
 
 # ウェブページの変更をチェック
-def check_webpage_changes():
++ def check_webpage_changes(summarize=True):
+- def check_webpage_changes():
     urls = load_urls()
     current_hashes = load_hashes()
     new_hashes = current_hashes.copy()  # 現在のハッシュをコピー
@@ -221,7 +227,10 @@ def check_webpage_changes():
                     # 差分を抽出
                     diff = get_diff(previous_content, current_content)
 +                     # 差分を要約
-+                     summarized_diff = summarize_diff_with_openai(diff, url)
++                     if summarize:
++                         summarized_diff = summarize_diff_with_openai(diff, url)
++                     else:
++                         summarized_diff = diff
                     # 通知を送信
 -                     send_email(url, f"ページの内容が更新されました。\n\n差分:\n{diff}")
 +                     send_email(url, summarized_diff)
@@ -331,6 +340,9 @@ Github Actionsで運用する場合には，「Settings」→「Secrets and vari
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update monitor data" && git push)
 ```
 
+:::message
+要約を行わない場合には，環境変数`OPENAI_API_KEY`を未設定にするか，`main`関数内の`check_webpage_changes()`を`check_webpage_changes(summarize=False)`に書き換えてください．
+:::
 
 ## おわりに
 
