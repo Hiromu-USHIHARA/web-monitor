@@ -376,6 +376,7 @@ def main():
     
     # ウェブページの変更をチェック
     check_webpage_changes()
+    # check_webpage_changes(summarize=False)
     
     print("ウェブページ監視を完了しました。")
 
