@@ -274,7 +274,7 @@ def send_email(url, changes):
         print(f"メール送信に失敗: {e}")
 
 # ウェブページの変更をチェック
-def check_webpage_changes():
+def check_webpage_changes(summarize=True):
     urls = load_urls()
     current_hashes = load_hashes()
     new_hashes = current_hashes.copy()  # 現在のハッシュをコピー
@@ -322,7 +322,10 @@ def check_webpage_changes():
                     # 差分を抽出
                     diff = get_diff(previous_content, current_content)
                     # 差分を要約
-                    summarized_diff = summarize_diff_with_openai(diff, url)
+                    if summarize:
+                        summarized_diff = summarize_diff_with_openai(diff, url)
+                    else:
+                        summarized_diff = diff
                     # 通知を送信
                     send_email(url, summarized_diff)
                     # 前回のHTMLを削除して新しいHTMLを保存
