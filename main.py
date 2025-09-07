@@ -190,9 +190,10 @@ def summarize_diff_with_openai(diff, url):
         max_diff_length = 100000  # 安全マージン
         if len(diff) > max_diff_length:
             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
-            print(f"差分が長すぎるため切り詰めました: {len(diff_short)}")
+            print(f"差分が長すぎるため切り詰めました: {len(diff)} -> {len(diff_short)}")
         else:
             diff_short = diff
+            print(f"元の差分をそのまま使用します: {len(diff)}")
         
         prompt = f"""
 以下はWebページの更新の差分です
