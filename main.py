@@ -190,6 +190,7 @@ def summarize_diff_with_openai(diff, url):
         max_diff_length = 100000  # 安全マージン
         if len(diff) > max_diff_length:
             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
+            print(f"差分が長すぎるため切り詰めました: {len(diff_short)}")
         else:
             diff_short = diff
         
