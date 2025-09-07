@@ -24,7 +24,7 @@ TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if
 
 # OpenAI設定
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-OPENAI_MODEL = 'gpt-4.1-nano'
+OPENAI_MODEL = 'gpt-4.1-mini'
 
 # 監視対象のURLを読み込む
 def load_urls():
@@ -187,7 +187,7 @@ def summarize_diff_with_openai(diff, url):
         client = openai.OpenAI(api_key=OPENAI_API_KEY)
         
         # 差分が長すぎる場合は切り詰める（OpenAI APIの制限を考慮）
-        max_diff_length = 25000  # 安全マージン
+        max_diff_length = 100000  # 安全マージン
         if len(diff) > max_diff_length:
             diff_short = diff[:max_diff_length] + "\n... (差分が長すぎるため切り詰めました)"
         else:
