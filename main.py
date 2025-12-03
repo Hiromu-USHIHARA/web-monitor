@@ -24,7 +24,7 @@ TO_EMAILS = [email.strip() for email in os.getenv('TO_EMAILS', '').split(',') if
 
 # OpenAI設定
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-OPENAI_MODEL = 'gpt-5-mini'
+OPENAI_MODEL = 'gpt-4.1-mini'
 
 # 監視対象のURLを読み込む
 def load_urls():
